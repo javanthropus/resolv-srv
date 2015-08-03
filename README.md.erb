@@ -1,0 +1,128 @@
+<%
+  # This is the template file for README.md.  The gemspec details are available
+  # within the _spec_ attribute, and all methods defined in the Rakefile are
+  # also available.  The Rakefile will use this file to regenerate README.md
+  # when necessary.
+-%>
+# Resolv SRV
+
+<%= word_wrap(spec.summary) %>
+
+## Links
+
+* Homepage :: <%= spec.homepage %>
+* Source :: https://github.com/javanthropus/resolv-srv.git
+
+## Description
+
+<%= spec.description -%>
+
+## Features
+
+* Iterate over SRV resources in order by priority and randomly in proportion to
+  weight.
+
+## Known Bugs/Limitations
+
+* None so far...
+
+## Synopsis
+
+Look up your user information in Active Directory (assumes `/etc/ssl/certs`
+contains the internal CA certificate for the domain):
+
+```ruby
+#!/usr/bin/env ruby
+
+require 'net/ldap'
+require 'pp'
+require 'resolv-srv'
+
+def search_ldap(domain, username, password, search_args = {})
+  base = domain.split('.').map { |n| "dc=#{n}" }.join(',')
+  Resolv::DNS.open do |dns|
+    dns.each_srv_resource('ldap', 'tcp', domain) do |srv|
+      begin
+        Net::LDAP.open(
+          host: srv.target.to_s,
+          port: srv.port,
+          base: base,
+          auth: {
+            method: :simple,
+            username: username,
+            password: password,
+          },
+          encryption: {
+            method: :start_tls,
+            tls_options: { ca_path: '/etc/ssl/certs' }
+          },
+        ) do |ldap|
+          return ldap.search(search_args)
+        end
+      rescue Net::LDAP::Error, OpenSSL::SSL::SSLError
+        puts "Failed with host #{srv.target} on port #{srv.port}: #{$!}"
+      end
+    end
+  end
+end
+
+print 'AD Domain: '
+domain = gets.chomp
+print 'AD Username: '
+username = gets.chomp
+print "AD Password (#{username}): "
+password = ($stdin.tty? ? $stdin.noecho(&:gets) : $stdin.gets).chomp
+puts
+
+pp search_ldap(
+  domain,
+  "#{username}@#{domain}",
+  password,
+  filter: "sAMAccountName=#{username}"
+)
+```
+
+## Requirements
+
+<% if spec.runtime_dependencies.empty? -%>
+None
+<% else -%>
+<%   spec.runtime_dependencies.each do |dependency| -%>
+* <%= dependency %>
+<%   end -%>
+<% end -%>
+
+## Contributing
+
+Contributions for bug fixes, documentation, extensions, tests, etc. are
+encouraged.
+
+1. Clone the repository.
+2. Fix a bug or add a feature.
+3. Add tests for the fix or feature.
+4. Make a pull request.
+
+## Development
+
+After checking out the source, run:
+
+    $ bundle install
+    $ bundle exec rake test yard
+
+This will install all dependencies, run the tests/specs, and generate the
+documentation.
+
+## Authors
+
+Thanks to all contributors.  Without your help this project would not exist.
+
+<% spec.authors.zip(spec.email).each do |author, email| -%>
+* <%= author %> :: <%= email %>
+<% end -%>
+
+## License
+
+```
+<%= File.read('LICENSE') -%>
+```
+<% # vim: set ts=2 sw=2 et: -%>

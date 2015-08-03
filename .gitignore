@@ -1,0 +1,7 @@
+.*.sw?
+Gemfile.lock
+/.bundle/
+/.yardoc/
+/doc/
+/pkg/
+/vendor/bundle/
