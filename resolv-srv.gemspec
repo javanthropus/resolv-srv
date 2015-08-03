@@ -35,6 +35,7 @@ and iterate over SRV records according to their relative priorities and weights.
   )
   # Explicitly list all test files that should be included into the gem here.
   s.test_files   = %w(
+    spec/each_srv_resource_spec.rb
   )
 
   s.require_path = 'lib'
