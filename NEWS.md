@@ -6,6 +6,10 @@ detailed information is available in the rest of the documentation.
 **NOTE:** Date stamps in the following entries are in YYYY/MM/DD format.
 
 
+## v0.0.2 (2016/01/05)
+
+* Include an improved example
+
 ## v0.0.1 (2015/08/03)
 
 * Birthday

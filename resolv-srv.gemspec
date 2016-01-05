@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = 'resolv-srv'
-  s.version     = '0.0.1'
+  s.version     = '0.0.2'
   s.platform    = Gem::Platform::RUBY
   s.authors     = ['Jeremy Bopp']
   s.email       = ['jeremy@bopp.net']
