@@ -24,7 +24,8 @@ and iterate over SRV records according to their relative priorities and weights.
 ## Synopsis
 
 Look up your user information in Active Directory (assumes `/etc/ssl/certs`
-contains the internal CA certificate for the domain):
+contains the internal CA certificate for the domain and that net-ldap v0.12.0 or
+greater is used):
 
 ```ruby
 #!/usr/bin/env ruby
@@ -33,31 +34,38 @@ require 'net/ldap'
 require 'pp'
 require 'resolv-srv'
 
-def search_ldap(domain, username, password, search_args = {})
-  base = domain.split('.').map { |n| "dc=#{n}" }.join(',')
-  Resolv::DNS.open do |dns|
-    dns.each_srv_resource('ldap', 'tcp', domain) do |srv|
-      begin
-        Net::LDAP.open(
-          host: srv.target.to_s,
-          port: srv.port,
-          base: base,
-          auth: {
-            method: :simple,
-            username: username,
-            password: password,
-          },
-          encryption: {
-            method: :start_tls,
-            tls_options: { ca_path: '/etc/ssl/certs' }
-          },
-        ) do |ldap|
-          return ldap.search(search_args)
-        end
-      rescue Net::LDAP::Error, OpenSSL::SSL::SSLError
-        puts "Failed with host #{srv.target} on port #{srv.port}: #{$!}"
+class LDAPServerList
+  include Enumerable
+
+  def initialize(domain)
+    @domain = domain
+  end
+
+  def each
+    Resolv::DNS.open do |dns|
+      dns.each_srv_resource('ldap', 'tcp', @domain) do |srv|
+        yield(srv.target.to_s, srv.port)
       end
     end
+  end
+end
+
+def search_ldap(domain, username, password, search_args = {})
+  base = domain.split('.').map { |n| "dc=#{n}" }.join(',')
+  Net::LDAP.open(
+    hosts: LDAPServerList.new(domain),
+    base: base,
+    auth: {
+      method: :simple,
+      username: username,
+      password: password,
+    },
+    encryption: {
+      method: :start_tls,
+      tls_options: { ca_path: '/etc/ssl/certs' }
+    },
+  ) do |ldap|
+    return ldap.search(search_args)
   end
 end
 
@@ -75,6 +83,7 @@ pp search_ldap(
   password,
   filter: "sAMAccountName=#{username}"
 )
+
 ```
 
 ## Requirements

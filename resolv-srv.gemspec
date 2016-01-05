@@ -31,6 +31,7 @@ and iterate over SRV records according to their relative priorities and weights.
     NEWS.md
     Rakefile
     README.md
+    examples/active-directory.rb
     lib/resolv-srv.rb
   )
   # Explicitly list all test files that should be included into the gem here.
